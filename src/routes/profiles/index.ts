@@ -6,9 +6,9 @@ import type { ProfileEntity } from '../../utils/DB/entities/DBProfiles';
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify
 ): Promise<void> => {
-  fastify.get('/', async function (request, reply): Promise<
-    ProfileEntity[]
-  > {});
+  fastify.get('/', async function (request, reply): Promise<ProfileEntity[]> {
+    return fastify.db.profiles.findMany();
+  });
 
   fastify.get(
     '/:id',
@@ -17,7 +17,13 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<ProfileEntity> {}
+    async function (request, reply): Promise<ProfileEntity | null> {
+      const data = await fastify.db.profiles.findOne({key: 'id', equals: request.params.id});
+      if (data === null) {
+        reply.statusCode = 404;
+      }
+      return data;
+    }
   );
 
   fastify.post(
@@ -27,7 +33,10 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         body: createProfileBodySchema,
       },
     },
-    async function (request, reply): Promise<ProfileEntity> {}
+    async function (request, reply): Promise<ProfileEntity> {
+      reply.statusCode = 400;
+      return fastify.db.profiles.create(request.body);
+    }
   );
 
   fastify.delete(
@@ -37,7 +46,10 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<ProfileEntity> {}
+    async function (request, reply): Promise<ProfileEntity> {
+      reply.statusCode = 400;
+      return fastify.db.profiles.delete(request.params.id);
+    }
   );
 
   fastify.patch(
@@ -48,7 +60,10 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<ProfileEntity> {}
+    async function (request, reply): Promise<ProfileEntity> {
+      reply.statusCode = 400;
+      return fastify.db.profiles.change(request.params.id, request.body);
+    }
   );
 };
 
